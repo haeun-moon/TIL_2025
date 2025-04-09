@@ -11,8 +11,7 @@
 
 ## Day 07
 
-- 백준 단계별로 풀어보기 학습 중!
-- `단계 4` 진행 중!
+- DP (Dynamic Programming) 집중 공부 중!
 
 ## Day 08
 
