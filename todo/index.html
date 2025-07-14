@@ -1,0 +1,77 @@
+<!-- index.html (간단 TODO 프론트엔드) -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>간단 TODO 프론트엔드</title>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 30px auto; }
+    h1 { text-align: center; }
+    ul { padding: 0; }
+    li { list-style: none; margin-bottom: 8px; display: flex; align-items: center; }
+    button { margin-left: 10px; }
+    .done { text-decoration: line-through; color: #aaa; }
+    input[type="text"] { width: 250px; }
+  </style>
+</head>
+<body>
+  <h1>TODO LIST</h1>
+  <form id="todo-form">
+    <input type="text" id="todo-input" placeholder="할일을 입력하세요" required />
+    <button type="submit">추가</button>
+  </form>
+  <ul id="todo-list"></ul>
+
+  <script>
+    const API_URL = "http://localhost:3000/todos";
+    const $list = document.getElementById('todo-list');
+    const $form = document.getElementById('todo-form');
+    const $input = document.getElementById('todo-input');
+
+    // 할일 목록 불러오기
+    async function loadTodos() {
+      $list.innerHTML = '';
+      const res = await fetch(API_URL);
+      const todos = await res.json();
+      todos.forEach(todo => {
+        const $li = document.createElement('li');
+        $li.innerHTML = `
+          <span class="${todo.done ? 'done' : ''}" style="flex:1;cursor:pointer">${todo.title}</span>
+          <button data-id="${todo.id}" class="del">삭제</button>
+        `;
+        // 할일 클릭시 완료/미완료 토글
+        $li.querySelector('span').onclick = async () => {
+          await fetch(API_URL + '/' + todo.id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ done: !todo.done })
+          });
+          loadTodos();
+        };
+        // 삭제 버튼
+        $li.querySelector('.del').onclick = async e => {
+          await fetch(API_URL + '/' + todo.id, { method: 'DELETE' });
+          loadTodos();
+        };
+        $list.appendChild($li);
+      });
+    }
+
+    // 할일 추가
+    $form.onsubmit = async e => {
+      e.preventDefault();
+      const title = $input.value.trim();
+      if (!title) return;
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title })
+      });
+      $input.value = '';
+      loadTodos();
+    };
+
+    loadTodos();
+  </script>
+</body>
+</html>
