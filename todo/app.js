@@ -52,21 +52,57 @@ function saveTodos(todos) {
 
 
 // [3] 할일 전체 조회
+
+//HTTP GET 메서드 사용 -> CRUD 의 READ 조회
+//GET /todos 요청이 오면 res.json(todos) 가 실행돼서 클라이언트로 목록이 응답된다
+// /todos 자체가 JSON 목록을 돌려주는 엔드포인트
 app.get('/todos', (req, res) => {
+
+  //loadTodos 를 todos 에 저장
   const todos = loadTodos();
+
+  //todos 를 json 으로 전달
+  //Express 응답 메서드
+  //JSON.stringify 로 문자열화 한 후
+  //Content-Type: application/json; charset=uft-8 헤더 자동 설정
+  //직렬화 + 전송까지 처리
   res.json(todos);
 });
 
+
+
+
 // [4] 할일 추가
+
+//HTTP POST 메서드 사용 -> CRUD 의 CREATE 생성
 app.post('/todos', (req, res) => {
+
+  //기존 todo 목록을 읽어오기
   const todos = loadTodos();
+
+  //요청 본문 req.body 의 title 필드만 꺼내어 title 에 저장
+  //{ title } 인 이유 - req.body 는 객체, 구조 분해 할당 사용
   const { title } = req.body;
+
+  //title 값이 없거나 빈 문자열이라면 400 Bad Request 와 { error: 'title is required' } JSON 응답
   if (!title) return res.status(400).json({ error: 'title is required' });
+
+  //id 값은 현재 시각, done 값은 false 를 기본값으로 title 과 함께 newTodo 로 저장
+  // done 의 경우 기본값 false 로 새 객체를 생성해 newTodo 변수에 저장
   const newTodo = { id: Date.now(), title, done: false };
+
+  //기존 todos 배열에 newTodo 를 push
   todos.push(newTodo);
+
+  //수정된 todos 배열을 파일에 저장
   saveTodos(todos);
+
+  //201 Created 상태 코드와 함께 newTodo 객체를 JSON 으로 응답
   res.status(201).json(newTodo);
 });
+
+
+
 
 // [5] 할일 수정
 app.put('/todos/:id', (req, res) => {
