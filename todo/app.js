@@ -77,7 +77,7 @@ app.get('/todos', (req, res) => {
 //HTTP POST 메서드 사용 -> CRUD 의 CREATE 생성
 app.post('/todos', (req, res) => {
 
-  //기존 todo 목록을 읽어오기
+  //기존 todos 목록을 읽어오기
   const todos = loadTodos();
 
   //요청 본문 req.body 의 title 필드만 꺼내어 title 에 저장
@@ -105,26 +105,86 @@ app.post('/todos', (req, res) => {
 
 
 // [5] 할일 수정
+
+//HTTP PUT 메서드 사용 -> CRUD 의 UPDATE 생성
 app.put('/todos/:id', (req, res) => {
+
+  //기존 todos 목록을 읽어오기
   const todos = loadTodos();
+
+  //경로 파라미터의 id 값 (문자열) 을 Number 로 실수화
+  //t 는 배열을 돌며 만나는 각 todo 객체
+  //t.id 값과 일치하는지 확인 (엄격한 비교)
+  //todos 배열에서 첫번째로 콜백이 true 를 돌려준 요소를 반환
+  //todo 에 저장
+
+  //만약 todos.find 조건을 만족하는 요소가 없다면 undefined
+
+  //find 가 반환하는 것은 새로 복사된 데이터가 아니라, 배열 안에 들어 있던 그 객체의 참조
+  // 즉, todo 와 todos[index] 는 메모리 상 동일한 객체를 바라본다
   const todo = todos.find(t => t.id === Number(req.params.id));
+
+  //undefined 라면 Boolean 문맥 속에서 자동으로 false 로 변환 -> 내장 규칙 ToBoolean 참고
+  //todo 값이 false 라면 ! 으로 인해 true 로 변환
+  //404 Not Found 응답을 보냄
   if (!todo) return res.status(404).json({ error: "Not found" });
+
+  //req.body.title 을 확인 후 있다면 값 변환, 없다면 기존 값 todo.title 유지
+  // ?? - 좌항이 null 또는 undefined 라면 우항을 사용 -> || 와 비교 참조
+  //현재로써는 title 값을 수정할 수 없기 때문에 주석 처리해도 정상 작동
   todo.title = req.body.title ?? todo.title;
+
+  //req.body.done 을 확인 후 있다면 값 변환, 없다면 기존 값 todo.done 유지
   todo.done = req.body.done ?? todo.done;
+
+  //todo 와 todos[index]가 메모리 상 동일한 객체를 바라보기 때문에
+  //todo 를 따로 저장하지 않아도 todos 안에 반영되어 있음
+  //수정된 todos 배열을 파일에 저장
   saveTodos(todos);
+
+  //todos 를 json 으로 전달
   res.json(todo);
 });
 
+
+
 // [6] 할일 삭제
+
+//HTTP Delete 메서드 사용 -> CRUD 의 DELETE 생성
 app.delete('/todos/:id', (req, res) => {
+
+  //기존 todos 목록 읽어오기
+  //filter 결과로 새 배열을 재할당해야 하기 때문에 const 말고 let 사용
   let todos = loadTodos();
+
+  //삭제 전 todos 의 배열 길이를 저장
+  //후에 정상적으로 삭제되었는지 확인하기 위함
   const lengthBefore = todos.length;
+
+  //filter 를 통해 삭제 id 를 제외한 todo 만 저장
+  //filter : 불변 상태 관리 - 원본은 손대지 않고, 수정된 사본을 만들어 반환
   todos = todos.filter(t => t.id !== Number(req.params.id));
+
+  //삭제 후 길이가 이전 길이와 동일하다면 삭제 실패
+  //404 Not Found 로 응답을 보냄
   if (todos.length === lengthBefore) return res.status(404).json({ error: "Not found" });
+
+  //수정된 todos 배열을 파일에 저장
   saveTodos(todos);
+
+  //성공 결과 응답
+  // res.status(200).json({ success: true }) 와 동일
+  //응답 본문을 JSON 으로 보내고, 아직 상태 코드를 지정하지 않았다면 200 OK 로 기본 설정한다
   res.json({ success: true });
 });
 
+
+
+//Express 앱을 포트 3000 에서 실행
+//서버가 실제로 리스닝을 시작한 순간에만 콜백을 호출
+//app 은 (req, res) 서명 함수를 가지고 있어 요청 처리 가능
 app.listen(3000, () => {
+
+  //리스닝이 성공적으로 완료되면 한 번 호출되는 콜백 함수
   console.log('TODO API 서버 http://localhost:3000');
 });
